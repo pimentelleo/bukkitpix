@@ -9,8 +9,6 @@ import java.util.Locale;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -18,6 +16,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import java.io.IOException;
 
 import io.github.pimentelleo.bukkitpix.BukkitPix;
@@ -46,7 +45,7 @@ public class MercadoPagoAPI {
 						"type": "electronics",
 						"event_date": "2023-12-31T09:37:52.000-04:00",
 						"warranty": false,
-						"category_descriptor": {
+						"category_descriptor":" {
 							"passenger": {},
 							"route": {}
 						}
@@ -63,64 +62,91 @@ public class MercadoPagoAPI {
 			"installments": 1,
 			"metadata": null,
 			"payer": {
-				"email": "leonardociberxon@gmail.com"
+				"email": "%s"
 			},
 			"payment_method_id": "pix",
 			"transaction_amount": 2
 		}
-				""";
+			""".formatted(p.getName());
 		
-		try {
-			URL url = new URL(API_URL);
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		OkHttpClient client = new OkHttpClient();
+		RequestBody body = RequestBody.create(jsonBody, MediaType.get("application/json; charset=utf-8"));
+		Request request = new Request.Builder()
+			.url(API_URL)
+			.post(body)
+			.addHeader("Content-Type", "application/json")
+			.addHeader("Accept", "application/json")
+			.addHeader("Authorization", "Bearer " + ap.getConfig().getString("token-mp"))
+			.build();
 
-	        connection.setRequestMethod("POST");
-	        connection.setDoOutput(true);
-	        connection.setRequestProperty("Content-Type", "application/json");
-	        connection.setRequestProperty("Accept", "application/json");
-	        connection.setRequestProperty("Authorization", "Bearer " + ap.getConfig().getString("token-mp"));
-	        try (DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream())) {
-                outputStream.writeBytes(jsonBody);
-                outputStream.flush();
-            }
-	        
-			int statusCode = connection.getResponseCode();
-			
-			BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-	        String line;
-	        StringBuilder response = new StringBuilder();
-
-	        while ((line = reader.readLine()) != null) {
-	            response.append(line);
-	        }
-	        reader.close();
-			
-			if (statusCode != 201) {
-				Bukkit.getConsoleSender().sendMessage("\u00a7b[AutoPix] \u00a7cErro ao validar PIX:\n" 
-						+ statusCode + " - " + response.toString()
-						+ "\nVerifique se configurou corretamente o token do MP.");
-				MSG.sendMessage(p, "erro-validar");
-				return null;
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+			Bukkit.getConsoleSender().sendMessage("\u00a7b[AutoPix] \u00a7cErro ao validar PIX:\n" 
+				+ response.code() + " - " + response.body().string()
+				+ "\nVerifique se configurou corretamente o token do MP.");
+			MSG.sendMessage(p, "erro-validar");
+			return null;
 			}
-			
+
 			Order order = OrderManager.createOrder(p, product.getProduct(), product.getPrice());
 			if (order == null) {
 				MSG.sendMessage(p, "erro-validar");
 				return null;
 			}
-			
-			JSONObject json = (JSONObject) new JSONParser().parse(response.toString());
-			JSONObject poi = (JSONObject) json.get("point_of_interaction");
-			String qr = (String) ((JSONObject) poi.get("transaction_data"))
-					        .get("qr_code");
-			
+
+			String responseBody = response.body().string();
+			Gson gson = new Gson();
+			JsonObject json = gson.fromJson(responseBody, JsonObject.class);
+			JsonObject poi = json.getAsJsonObject("point_of_interaction");
+			String qr = poi.getAsJsonObject("transaction_data").get("qr_code").getAsString();
+
 			return qr;
-			
-		} catch (Exception e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 			MSG.sendMessage(p, "erro-validar");
+			return null;
 		}
-		return null;
+	}
+
+
+	public static String checkPayment(BukkitPix ap, Player p, OrderProduct product, String paymentId) {	
+
+		OkHttpClient client = new OkHttpClient();
+		Request request = new Request.Builder()
+			.url(API_URL + "/" + paymentId)
+			.get()
+			.addHeader("Content-Type", "application/json")
+			.addHeader("Accept", "application/json")
+			.addHeader("Authorization", "Bearer " + ap.getConfig().getString("token-mp"))
+			.build();
+
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+			Bukkit.getConsoleSender().sendMessage("\u00a7b[AutoPix] \u00a7cErro ao validar PIX:\n" 
+				+ response.code() + " - " + response.body().string()
+				+ "\nVerifique se configurou corretamente o token do MP.");
+			MSG.sendMessage(p, "erro-validar");
+			return null;
+			}
+
+			Order order = OrderManager.createOrder(p, product.getProduct(), product.getPrice());
+			if (order == null) {
+				MSG.sendMessage(p, "erro-validar");
+				return null;
+			}
+
+			String responseBody = response.body().string();
+			Gson gson = new Gson();
+			JsonObject json = gson.fromJson(responseBody, JsonObject.class);
+			JsonObject poi = json.getAsJsonObject("point_of_interaction");
+			String qr = poi.getAsJsonObject("transaction_data").get("qr_code").getAsString();
+
+			return qr;
+		} catch (IOException e) {
+			e.printStackTrace();
+			MSG.sendMessage(p, "erro-validar");
+			return null;
+		}
 	}
 
 	public static Object[] getPayment(BukkitPix ap, String id) {
@@ -147,17 +173,18 @@ public class MercadoPagoAPI {
 			reader.close();
 
 			responseMP = response.toString();
+			Gson gson = new Gson();
 
-			JSONObject json = (JSONObject) new JSONParser().parse(response.toString());
-			String status = (String) json.get("status");
-			if (!(status.equals("approved")))
-				return null;
-
-			JSONObject details = (JSONObject) json.get("transaction_details");
-
-			String pixId = ((String) details.get("transaction_id")).substring(3);
-			double paid = (double) details.get("total_paid_amount");
-
+			JsonObject json = (JSONObject) new JSONParser().parse(response.toString());
+			JSONObject json = new JSONObject(new JSONTokener(response.toString()));
+			Gson gson = new Gson();
+			JsonObject json = gson.fromJson(response.toString(), JsonObject.class);
+			String status = json.get("status").getAsString();
+			
+			JSONObject details = json.getJSONObject("transaction_details");
+			
+			String pixId = details.getString("transaction_id").substring(3);
+			double paid = details.getDouble("total_paid_amount");
 			return new Object[] { pixId, paid };
 
 		} catch (Exception e) {
