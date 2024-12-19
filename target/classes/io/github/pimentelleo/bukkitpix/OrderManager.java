@@ -56,7 +56,7 @@ public class OrderManager {
 		conn.prepareStatement("CREATE TABLE IF NOT EXISTS autopix_orders "
 				+ "(id INTEGER PRIMARY KEY " + autoIncrement + ", player VARCHAR(16) NOT NULL,"
 				+ "product VARCHAR(16) NOT NULL, price DECIMAL(10, 2) NOT NULL, "
-				+ "created TIMESTAMP NOT NULL, pix VARCHAR(32) UNIQUE NULL);").executeUpdate();
+				+ "created TIMESTAMP NOT NULL, pix VARCHAR(32) UNIQUE NULL, paymentId INTEGER NOT NULL);").executeUpdate();
 		
 		conn.prepareStatement("CREATE TABLE IF NOT EXISTS autopix_pendings " 
 				+ "(id VARCHAR(32) PRIMARY KEY, player VARCHAR(16) NOT NULL);").executeUpdate();
@@ -68,11 +68,12 @@ public class OrderManager {
 		try {
 			
 			PreparedStatement ps = conn.prepareStatement("INSERT INTO autopix_orders "
-					+ "(player, product, price, created) VALUES (?, ?, ?, ?);");
+					+ "(player, product, price, created, paymentId) VALUES (?, ?, ?, ?);");
 			ps.setString(1, p.getName());
 			ps.setString(2, product);
 			ps.setFloat(3, price);
 			ps.setTimestamp(4, Timestamp.from(Instant.now()));
+			ps.setInt(5, paymentId)
 			
 			ps.executeUpdate();
 			

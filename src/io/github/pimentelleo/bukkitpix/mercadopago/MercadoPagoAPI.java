@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Locale;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -30,6 +31,7 @@ public class MercadoPagoAPI {
 	private static final String API_URL = "https://api.mercadopago.com/v1/payments";
 
 	public static String createPixPayment(BukkitPix ap, Player p, OrderProduct product, float price) {	
+		UUID indepotencyKey = UUID.randomUUID();
 		String jsonBody = """
 		{
 			"additional_info": {
@@ -41,7 +43,7 @@ public class MercadoPagoAPI {
 						"picture_url": "nullurl",
 						"category_id": "electronics",
 						"quantity": 1,
-						"unit_price": 2,
+						"unit_price": %s,
 						"type": "electronics",
 						"event_date": "2023-12-31T09:37:52.000-04:00",
 						"warranty": false,
@@ -67,7 +69,7 @@ public class MercadoPagoAPI {
 			"payment_method_id": "pix",
 			"transaction_amount": 2
 		}
-			""".formatted(p.getName());
+			""".formatted(price, p.getName());
 		
 		OkHttpClient client = new OkHttpClient();
 		RequestBody body = RequestBody.create(jsonBody, MediaType.get("application/json; charset=utf-8"));
@@ -76,6 +78,7 @@ public class MercadoPagoAPI {
 			.post(body)
 			.addHeader("Content-Type", "application/json")
 			.addHeader("Accept", "application/json")
+			.addHeader("X-Idempotency-Key", indepotencyKey.toString())
 			.addHeader("Authorization", "Bearer " + ap.getConfig().getString("token-mp"))
 			.build();
 
@@ -153,53 +156,53 @@ public class MercadoPagoAPI {
 		}
 	}
 
-	public static Object[] getPayment(BukkitPix ap, String id) {
-		String responseMP = "";
-		try {
-			URL url = new URL(API_URL + "/" + id);
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+	// public static Object[] getPayment(BukkitPix ap, String id) {
+	// 	String responseMP = "";
+	// 	try {
+	// 		URL url = new URL(API_URL + "/" + id);
+	// 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-			connection.setRequestMethod("GET");
-			connection.setRequestProperty("Accept", "application/json");
-			connection.setRequestProperty("Authorization", "Bearer " + ap.getConfig().getString("token-mp"));
+	// 		connection.setRequestMethod("GET");
+	// 		connection.setRequestProperty("Accept", "application/json");
+	// 		connection.setRequestProperty("Authorization", "Bearer " + ap.getConfig().getString("token-mp"));
 
-			int statusCode = connection.getResponseCode();
-			if (statusCode != 200) {
-				return null;
-			}
-			BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			String line;
-			StringBuilder response = new StringBuilder();
+	// 		int statusCode = connection.getResponseCode();
+	// 		if (statusCode != 200) {
+	// 			return null;
+	// 		}
+	// 		BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+	// 		String line;
+	// 		StringBuilder response = new StringBuilder();
 
-			while ((line = reader.readLine()) != null) {
-				response.append(line);
-			}
-			reader.close();
+	// 		while ((line = reader.readLine()) != null) {
+	// 			response.append(line);
+	// 		}
+	// 		reader.close();
 
-			responseMP = response.toString();
-			Gson gson = new Gson();
+	// 		responseMP = response.toString();
+	// 		Gson gson = new Gson();
 
-			JsonObject json = (JSONObject) new JSONParser().parse(response.toString());
-			JSONObject json = new JSONObject(new JSONTokener(response.toString()));
-			Gson gson = new Gson();
-			JsonObject json = gson.fromJson(response.toString(), JsonObject.class);
-			String status = json.get("status").getAsString();
+	// 		JsonObject json = (JSONObject) new JSONParser().parse(response.toString());
+	// 		JSONObject json = new JSONObject(new JSONTokener(response.toString()));
+	// 		Gson gson = new Gson();
+	// 		JsonObject json = gson.fromJson(response.toString(), JsonObject.class);
+	// 		String status = json.get("status").getAsString();
 			
-			JSONObject details = json.getJSONObject("transaction_details");
+	// 		JSONObject details = json.getJSONObject("transaction_details");
 			
-			String pixId = details.getString("transaction_id").substring(3);
-			double paid = details.getDouble("total_paid_amount");
-			return new Object[] { pixId, paid };
+	// 		String pixId = details.getString("transaction_id").substring(3);
+	// 		double paid = details.getDouble("total_paid_amount");
+	// 		return new Object[] { pixId, paid };
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			Bukkit.getConsoleSender().sendMessage("\u00a7b========== \u00a7aDEBUG \u00a7b==========");
-			Bukkit.getConsoleSender().sendMessage("\u00a7aPagamento: \u00a7f" + id);
-			Bukkit.getConsoleSender().sendMessage("\u00a7aRetorno MP:");
-			Bukkit.getConsoleSender().sendMessage(responseMP.toString());
-			Bukkit.getConsoleSender().sendMessage("\u00a7b================================================");
-		}
-		return null;
-	}
+	// 	} catch (Exception e) {
+	// 		e.printStackTrace();
+	// 		Bukkit.getConsoleSender().sendMessage("\u00a7b========== \u00a7aDEBUG \u00a7b==========");
+	// 		Bukkit.getConsoleSender().sendMessage("\u00a7aPagamento: \u00a7f" + id);
+	// 		Bukkit.getConsoleSender().sendMessage("\u00a7aRetorno MP:");
+	// 		Bukkit.getConsoleSender().sendMessage(responseMP.toString());
+	// 		Bukkit.getConsoleSender().sendMessage("\u00a7b================================================");
+	// 	}
+	// 	return null;
+	// }
 
 }
