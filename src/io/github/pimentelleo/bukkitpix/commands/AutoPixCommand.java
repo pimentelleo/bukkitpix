@@ -17,6 +17,7 @@ import io.github.pimentelleo.bukkitpix.OrderManager;
 import io.github.pimentelleo.bukkitpix.TimeManager;
 import io.github.pimentelleo.bukkitpix.inventory.InventoryManager;
 import io.github.pimentelleo.bukkitpix.mercadopago.MPValidator;
+import io.github.pimentelleo.bukkitpix.mercadopago.MercadoPagoAPI;
 
 public class AutoPixCommand implements CommandExecutor {
 	
@@ -87,6 +88,10 @@ public class AutoPixCommand implements CommandExecutor {
 					MSG.sendMessage(sender, "ajuda-cancelar");
 					return false;
 				}
+			}
+			else if (args[0].equalsIgnoreCase("check")) {
+				String payId = args[1];
+				MercadoPagoAPI.checkPayment(null, null, payId);
 			}
 			else if (args[0].equalsIgnoreCase("reload")) {
 				if (!sender.hasPermission("autopix.admin")) {

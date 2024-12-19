@@ -45,7 +45,6 @@ public class MercadoPagoAPI {
 						"quantity": 1,
 						"unit_price": %s,
 						"type": "electronics",
-						"event_date": "2023-12-31T09:37:52.000-04:00",
 						"warranty": false,
 						"category_descriptor":" {
 							"passenger": {},
@@ -91,6 +90,7 @@ public class MercadoPagoAPI {
 			MSG.sendMessage(p, "erro-validar");
 			return null;
 			}
+			
 			JsonObject responseObject = gson.fromJson(response.body().charStream(), JsonObject.class);
 			int paymentId = responseObject.get("id").getAsInt();
 			Order order = OrderManager.createOrder(p, product.getProduct(), product.getPrice(), paymentId);
@@ -116,7 +116,7 @@ public class MercadoPagoAPI {
 	}
 
 
-	public static String checkPayment(BukkitPix ap, Player p, OrderProduct product, String paymentId) {	
+	public static String checkPayment(BukkitPix ap, Player p, String paymentId) {	
 
 		OkHttpClient client = new OkHttpClient();
 		Request request = new Request.Builder()
