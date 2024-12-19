@@ -80,6 +80,7 @@ public class MercadoPagoAPI {
 			.build();
 
 		try (Response response = client.newCall(request).execute()) {
+			Gson gson = new Gson();
 			if (!response.isSuccessful()) {
 			Bukkit.getConsoleSender().sendMessage("\u00a7b[AutoPix] \u00a7cErro ao validar PIX:\n" 
 				+ response.code() + " - " + response.body().string()
@@ -87,15 +88,18 @@ public class MercadoPagoAPI {
 			MSG.sendMessage(p, "erro-validar");
 			return null;
 			}
-
-			Order order = OrderManager.createOrder(p, product.getProduct(), product.getPrice());
+			JsonObject responseObject = gson.fromJson(response.body().charStream(), JsonObject.class);
+			int paymentId = responseObject.get("id").getAsInt();
+			Order order = OrderManager.createOrder(p, product.getProduct(), product.getPrice(), paymentId);
 			if (order == null) {
 				MSG.sendMessage(p, "erro-validar");
 				return null;
 			}
+			MSG.sendMessage(p, "erro-validar");
+
 
 			String responseBody = response.body().string();
-			Gson gson = new Gson();
+			
 			JsonObject json = gson.fromJson(responseBody, JsonObject.class);
 			JsonObject poi = json.getAsJsonObject("point_of_interaction");
 			String qr = poi.getAsJsonObject("transaction_data").get("qr_code").getAsString();
@@ -129,11 +133,11 @@ public class MercadoPagoAPI {
 			return null;
 			}
 
-			Order order = OrderManager.createOrder(p, product.getProduct(), product.getPrice());
-			if (order == null) {
-				MSG.sendMessage(p, "erro-validar");
-				return null;
-			}
+			// Order order = OrderManager.createOrder(p, product.getProduct(), product.getPrice());
+			// if (order == null) {
+			// 	MSG.sendMessage(p, "erro-validar");
+			// 	return null;
+			// }
 
 			String responseBody = response.body().string();
 			Gson gson = new Gson();

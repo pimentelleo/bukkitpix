@@ -64,7 +64,7 @@ public class OrderManager {
 		return true;
 	}
 	
-	public static Order createOrder(Player p, String product, float price) {
+	public static Order createOrder(Player p, String product, float price, Integer paymentId) {
 		try {
 			
 			PreparedStatement ps = conn.prepareStatement("INSERT INTO autopix_orders "
