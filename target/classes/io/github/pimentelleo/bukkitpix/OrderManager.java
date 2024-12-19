@@ -73,7 +73,7 @@ public class OrderManager {
 			ps.setString(2, product);
 			ps.setFloat(3, price);
 			ps.setTimestamp(4, Timestamp.from(Instant.now()));
-			ps.setInt(5, paymentId)
+			ps.setInt(5, paymentId);
 			
 			ps.executeUpdate();
 			
@@ -164,7 +164,7 @@ public class OrderManager {
 				
 				String id = rs.getString("id");
 				
-				Object[] data = MercadoPagoAPI.getPayment(ap, id);
+				Object[] data = MercadoPagoAPI.checkPayment(ap, id);
 				if (data == null) continue;
 				
 				String pixId = (String) data[0];
