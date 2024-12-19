@@ -30,7 +30,7 @@ public class MercadoPagoAPI {
 
 	private static final String API_URL = "https://api.mercadopago.com/v1/payments";
 
-	public static String createPixPayment(BukkitPix ap, Player p, OrderProduct product, float price) {	
+	public static Object[] createPixPayment(BukkitPix ap, Player p, OrderProduct product, float price) {	
 		UUID indepotencyKey = UUID.randomUUID();
 		String jsonBody = """
 		{
@@ -93,21 +93,19 @@ public class MercadoPagoAPI {
 			
 			JsonObject responseObject = gson.fromJson(response.body().charStream(), JsonObject.class);
 			int paymentId = responseObject.get("id").getAsInt();
-			Order order = OrderManager.createOrder(p, product.getProduct(), product.getPrice(), paymentId);
-			if (order == null) {
-				MSG.sendMessage(p, "erro-validar");
-				return null;
-			}
-			MSG.sendMessage(p, "erro-validar");
 
+			// MSG.sendMessage(p, "erro-validar");
 
 			String responseBody = response.body().string();
 			
 			JsonObject json = gson.fromJson(responseBody, JsonObject.class);
 			JsonObject poi = json.getAsJsonObject("point_of_interaction");
 			String qr = poi.getAsJsonObject("transaction_data").get("qr_code").getAsString();
-
-			return qr;
+			Object[] paymentData = {
+				paymentId,
+				qr
+			};
+			return paymentData;
 		} catch (IOException e) {
 			e.printStackTrace();
 			MSG.sendMessage(p, "erro-validar");

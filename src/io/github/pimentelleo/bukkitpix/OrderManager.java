@@ -64,16 +64,18 @@ public class OrderManager {
 		return true;
 	}
 	
-	public static Order createOrder(Player p, String product, float price, Integer paymentId) {
+	public static Order createOrder(Player p, String product, float price, Object[] paymentData) {
 		try {
-			
+			String paymentId = (String) paymentData[0];
+			String qrData = (String) paymentData[1];
 			PreparedStatement ps = conn.prepareStatement("INSERT INTO autopix_orders "
 					+ "(player, product, price, created, paymentId) VALUES (?, ?, ?, ?);");
 			ps.setString(1, p.getName());
 			ps.setString(2, product);
 			ps.setFloat(3, price);
 			ps.setTimestamp(4, Timestamp.from(Instant.now()));
-			ps.setInt(5, paymentId);
+			ps.setString(5, paymentId);
+			ps.setString(6, qrData);
 			
 			ps.executeUpdate();
 			
@@ -130,6 +132,17 @@ public class OrderManager {
 	}
 	
 	public static boolean isTransactionValidated(String transactionId) {
+		try {
+			PreparedStatement ps = conn.prepareStatement("SELECT id FROM autopix_orders WHERE pix = ?;");
+			ps.setString(1, transactionId);
+			return ps.executeQuery().next();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return true;
+		}
+	}
+
+	public static boolean validateOrder(String transactionId) {
 		try {
 			PreparedStatement ps = conn.prepareStatement("SELECT id FROM autopix_orders WHERE pix = ?;");
 			ps.setString(1, transactionId);

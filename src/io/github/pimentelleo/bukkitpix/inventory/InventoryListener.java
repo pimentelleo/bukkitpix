@@ -97,32 +97,19 @@ public class InventoryListener implements Listener {
 				@Override
 				public void run() {
 					
-					Order ord = OrderManager.createOrder(p, op.getProduct(), price);
-					if (ord == null) {
-						MSG.sendMessage(p, "erro");
-						return;
-					}
-					
 					try {
-						String payload = null;
 						boolean automaticMode = BukkitPix.getInstance().getConfig().getBoolean("automatico.ativado");
 						boolean generateMap = BukkitPix.getInstance().getConfig().getBoolean("pix.mapa");
 						
-						if (automaticMode)
-							payload = MercadoPagoAPI.createPixPayment(BukkitPix.getInstance(), p, op, price);
-						else {
-							// If automatic mode is not enabled, create a static QR code
-							payload = PixGenerator.generatePayload(
-									BukkitPix.getPixKey(), BukkitPix.getPixName(), op.getProduct(), price
-									);
-							
-							if (BukkitPix.getInstance().getConfig().getBoolean("pix.debug", false))
-								Bukkit.getConsoleSender().sendMessage(
-										"\u00a7b[AutoPix] \u00a7aPayload: \u00a7f" + payload
-										);
-							
+						Object[] paymentData = MercadoPagoAPI.createPixPayment(BukkitPix.getInstance(), p, op, price);
+						String qrData = (String) paymentData[1];
+						Order order = OrderManager.createOrder(p, op.getProduct(), op.getPrice(), paymentData);
+						if (order == null) {
+							MSG.sendMessage(p, "erro-validar");
 						}
-						final BufferedImage qr = (automaticMode || generateMap) ? ImageCreator.generateQR(payload) : null;
+							
+						
+						final BufferedImage qr = (automaticMode || generateMap) ? ImageCreator.generateQR(qrData) : null;
 						
 						new BukkitRunnable() {
 							@Override
