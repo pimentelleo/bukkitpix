@@ -1,0 +1,140 @@
+# Token do MercadoPago para consultar transacoes
+token-mp: 'SEU TOKEN DO MERCADO PAGO'
+
+# Configuracoes do PIX
+pix:
+  # CPF, CNPJ, Celular com +55 e DDD, email ou aleatoria 
+  chave: 'SUA CHAVE PIX'
+  # Nome do beneficiario com ate 25 caracteres
+  nome: 'Fulano de Tal'
+  # Ative essa opcao para receber a payload dos codigos gerados
+  debug: false
+  # Desative essa opcao para nao enviar o mapa para o jogador no modo manual
+  mapa: true
+
+# Modo de ativacao automatico
+automatico:
+  ativado: true
+  intervalo: 10
+  notificacoes: 'http://meusite.com/autopix/notification.php'
+  
+# Servidor MySQL para salvamento dos dados
+database:
+  type: mysql
+  db: tests
+  host: localhost
+  port: 3306
+  user: root
+  pass: admin
+
+# Tempo de espera para cada acao em segundos
+tempos:
+  validar: 60
+  lista: 30
+  criar-pedido: 300
+
+# Mapa de pagamento
+mapa:
+  nome: '&aQR code de pagamento'
+  descricao:
+  - '&7Data: &f{data}'
+  - '&7Jogador: &f{jogador}'
+  - '&7Produto: &f{produto}'
+  # Tempo em MINUTOS que o jogador tem
+  # para pagar antes que o mapa seja removido
+  tempo-pagar: 30
+  # Intervalo em SEGUNDOS que a verificacao ira ocorrer
+  intervalo: 60
+  
+# Menus para compra de produtos por PIX
+menu:
+  principal:
+      titulo: '&9&lCompre produtos por &c&lPIX'
+      tamanho: 54
+      # Lista de produtos disponiveis
+      produtos:
+        VIP1:
+          preco: 0.23
+          pre-comandos:
+          - 'say {player} gerou uma ordem PIX!'
+          comandos:
+          - 'say {player} pagou por PIX!'
+          icone:
+            slot: 5
+            material: diamond_sword
+            nome: '&6&lVIP 1 &7- &aR${preco}'
+            descricao:
+            - '&7Vip por &c30 &7dias'
+            - '&7Clique para comprar por &aPIX'
+  # Menu para confirmar compra
+  confirmar:
+    titulo: '&9&lConfirmar compra por &c&lPIX'
+    tamanho: 27
+    cancelar:
+      slot: 19
+      icone:
+        material: wool
+        data: 14
+        nome: '&cCancelar'
+    confirmar:
+      slot: 27
+      icone:
+        material: wool
+        data: 5
+        nome: '&aConfirmar'
+        descricao:
+        - '&7Gerar codigo &bQR &7para'
+        - '&7pagar por PIX.'
+    desconto:
+        slot: 14
+        icone:
+            material: paper
+            nome: '&bAplicar cupom'
+            descricao:
+            - '&7Clique para informar um cupom no chat'
+
+# Cadastrar cupons de desconto
+cupons:
+    desconto15:
+        porcentagem: 15
+        # (Opcional, pode ser removida) A validade considera as 0h do dia informado
+        validade: 31/12/2023
+        itens:
+        - vip1
+    
+# Som ao pagamento ser validado
+som:
+  ativar: true
+  efeito: BLOCK_NOTE_BLOCK_BASS
+
+# Livro de ajuda com instrucoes
+info:
+  titulo: '&aInfo PIX'
+  autor: '&bAutoPix'
+  paginas:
+    1:
+    - ' &2&nPagamentos por PIX&r'
+    - ' '
+    - '&8Para pagar com &cPIX &8 use o comando:'
+    - ' '
+    - '      &9/comprarpix'
+    - ' '
+    - '&8Um menu ira aparecer mostrando os produtos disponiveis.'
+    2:
+    - '&8Escolha o produto que deseja e ao confirmar sera gerado um &8codigo &4&lQR.'
+    - ' '
+    - '&8Com o app do seu banco scaneie e realize o pagamento.'
+    3:
+    - '&8Após finalizar obtenha o ID da transacao.'
+    - ' '
+    - '&8Ele e mostrado no comprovante, tem &c32 &8caracteres e começa com &8a letra &c&lE&8.'
+    - ' '
+    - '&8Exemplo:'
+    - '&7E00416968202301162037NF2oRtQ73bY'
+    4:
+    - '&8Com o código em maos digite:'
+    - ' '
+    - ' &9/pix validar <Codigo>'
+    - ' '
+    - '&8seu PIX sera validado'
+    - '&8e voce receberá seu produto.'

@@ -9,9 +9,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+
 
 import io.github.pimentelleo.bukkitpix.BukkitPix;
 import io.github.pimentelleo.bukkitpix.MSG;
@@ -56,7 +54,7 @@ public class MPValidator {
 			
 			List<Order> orders = OrderManager.getOrders(p.getName());
 			
-			JSONObject json = (JSONObject) new JSONParser().parse(response.toString());
+			// JSONObject json = (JSONObject) new JSONParser().parse(response.toString());
 			
 			// Iterate over transaction list to find which one has the provided ID
 			// for (Object resElem : (JSONArray) json.get("results")) {

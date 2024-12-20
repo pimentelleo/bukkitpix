@@ -56,7 +56,7 @@ public class OrderManager {
 		conn.prepareStatement("CREATE TABLE IF NOT EXISTS autopix_orders "
 				+ "(id INTEGER PRIMARY KEY " + autoIncrement + ", player VARCHAR(16) NOT NULL,"
 				+ "product VARCHAR(16) NOT NULL, price DECIMAL(10, 2) NOT NULL, "
-				+ "created TIMESTAMP NOT NULL, pix VARCHAR(32) UNIQUE NULL, paymentId INTEGER NOT NULL);").executeUpdate();
+				+ "created TIMESTAMP NOT NULL, qrData VARCHAR(32) NOT NULL, paymentId INTEGER NOT NULL);").executeUpdate();
 		
 		conn.prepareStatement("CREATE TABLE IF NOT EXISTS autopix_pendings " 
 				+ "(id VARCHAR(32) PRIMARY KEY, player VARCHAR(16) NOT NULL);").executeUpdate();
@@ -66,15 +66,16 @@ public class OrderManager {
 	
 	public static Order createOrder(Player p, String product, float price, Object[] paymentData) {
 		try {
-			String paymentId = (String) paymentData[0];
+
+			Integer paymentId = (Integer) paymentData[0];
 			String qrData = (String) paymentData[1];
 			PreparedStatement ps = conn.prepareStatement("INSERT INTO autopix_orders "
-					+ "(player, product, price, created, paymentId) VALUES (?, ?, ?, ?);");
+					+ "(player, product, price, created, paymentId) VALUES (?, ?, ?, ?, ?, ?);");
 			ps.setString(1, p.getName());
 			ps.setString(2, product);
 			ps.setFloat(3, price);
 			ps.setTimestamp(4, Timestamp.from(Instant.now()));
-			ps.setString(5, paymentId);
+			ps.setInt(5, paymentId);
 			ps.setString(6, qrData);
 			
 			ps.executeUpdate();
@@ -177,19 +178,19 @@ public class OrderManager {
 				
 				String id = rs.getString("id");
 				
-				Object[] data = MercadoPagoAPI.checkPayment(ap, id);
-				if (data == null) continue;
+				// Object[] data = MercadoPagoAPI.checkPayment(ap, id);
+				// if (data == null) continue;
 				
-				String pixId = (String) data[0];
-				double paid = (double) data[1];
+				// String pixId = (String) data[0];
+				// double paid = (double) data[1];
 				
 				for (Order order : getOrders(player)) {
 					OrderProduct op = InventoryManager.getProductByOrder(order);
 					if (op == null) continue;
 					if (order.isValidated()) continue;
-					if (Math.abs(order.getPrice() - paid) > 0.001) continue;
+					// if (Math.abs(order.getPrice() - paid) > 0.001) continue;
 					
-					if (!(OrderManager.setTransaction(order, pixId))) continue;
+					// if (!(OrderManager.setTransaction(order, pixId))) continue;
 					
 					deletePending(id);
 					

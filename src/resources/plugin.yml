@@ -1,6 +1,6 @@
-name: AutoPix
+name: BukkitPix
 version: 1.0.19
-main: io.github.pimentelleo.bukkitpix
+main: io.github.pimentelleo.bukkitpix.BukkitPix
 author: batmann4bot
 api-version: 1.13
 commands:

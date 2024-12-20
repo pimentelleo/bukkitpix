@@ -63,7 +63,7 @@
         <defaultGoal>clean install</defaultGoal>
         <resources>
             <resource>
-                <directory>src</directory>
+                <directory>src/resources</directory>
                 <filtering>true</filtering>
             </resource>
         </resources>

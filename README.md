@@ -13,9 +13,8 @@ e quando ele confirmar a compra receberá nas mãos um QR code para pagar por PI
 <img src="https://i.imgur.com/UqkV1n4.png" align="middle" width="250px">
 
 ## Modos de validação
-**Modo manual:** Após pagar pelo banco de preferência ele obtém o código do PIX e faz `/pix validar <Codigo da Transacao>` e os comandos configurados serão executados. 
+**Modo manual:** Após pagar pelo banco de preferência ele obtém o id da transação, e digita `/pix validar <Codigo da Transacao>` e os comandos configurados serão executados. 
 
-**Modo automático:** No modo automático o jogador só precisa aguardar a confirmação. Para isso será necessário configurar uma URL de notificação para o MercadoPago.
 
 Você pode configurar comandos de dar VIP, dinheiro, itens etc.
  

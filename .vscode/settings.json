@@ -2,5 +2,7 @@
     "java.configuration.updateBuildConfiguration": "interactive",
     "java.project.sourcePaths": [
         "src/io/github/pimentelleo/bukkitpix"
-    ]
+    ],
+    "java.compile.nullAnalysis.mode": "automatic",
+    "maven.view": "flat"
 }

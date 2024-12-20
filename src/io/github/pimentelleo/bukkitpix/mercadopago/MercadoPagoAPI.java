@@ -1,12 +1,8 @@
 package io.github.pimentelleo.bukkitpix.mercadopago;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Locale;
 import java.util.UUID;
+
+import javax.print.attribute.standard.Media;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -18,6 +14,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
 import java.io.IOException;
 
 import io.github.pimentelleo.bukkitpix.BukkitPix;
@@ -32,6 +29,7 @@ public class MercadoPagoAPI {
 
 	public static Object[] createPixPayment(BukkitPix ap, Player p, OrderProduct product, float price) {	
 		UUID indepotencyKey = UUID.randomUUID();
+
 		String jsonBody = """
 		{
 			"additional_info": {
@@ -63,15 +61,22 @@ public class MercadoPagoAPI {
 			"installments": 1,
 			"metadata": null,
 			"payer": {
-				"email": "%s"
+				"email": "%s@gmail.com"
 			},
 			"payment_method_id": "pix",
 			"transaction_amount": 2
 		}
 			""".formatted(price, p.getName());
+		String formattedBody = jsonBody
+			.replaceAll("\\s+", "")        // Remove whitespace
+			.replace("\\", "")             // Remove backslashes
+			.replace("\"{\"", "{\"")       // Fix object start
+			.replace("\"}\"", "\"}")       // Fix object end
+			.trim();
+		// MSG.sendMessage(p, formattedBody);
 		
 		OkHttpClient client = new OkHttpClient();
-		RequestBody body = RequestBody.create(jsonBody, MediaType.get("application/json; charset=utf-8"));
+		RequestBody body = RequestBody.create(formattedBody, MediaType.get("application/json; charset=utf-8"));
 		Request request = new Request.Builder()
 			.url(API_URL)
 			.post(body)
@@ -84,7 +89,7 @@ public class MercadoPagoAPI {
 		try (Response response = client.newCall(request).execute()) {
 			Gson gson = new Gson();
 			if (!response.isSuccessful()) {
-			Bukkit.getConsoleSender().sendMessage("\u00a7b[AutoPix] \u00a7cErro ao validar PIX:\n" 
+			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7cErro ao validar PIX:\n" 
 				+ response.code() + " - " + response.body().string()
 				+ "\nVerifique se configurou corretamente o token do MP.");
 			MSG.sendMessage(p, "erro-validar");
@@ -92,15 +97,22 @@ public class MercadoPagoAPI {
 			}
 			
 			JsonObject responseObject = gson.fromJson(response.body().charStream(), JsonObject.class);
+			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aResponse: " + gson.toJson(responseObject));
+
 			int paymentId = responseObject.get("id").getAsInt();
+			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aPayment ID: " + gson.toJson(paymentId));
+
+			String qr = responseObject.getAsJsonObject("point_of_interaction").getAsJsonObject("transaction_data").get("qr_code").getAsString();
+			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aQR DATA: " + gson.toJson(qr));
+
 
 			// MSG.sendMessage(p, "erro-validar");
 
-			String responseBody = response.body().string();
+			// String responseBody = response.body().string();
 			
-			JsonObject json = gson.fromJson(responseBody, JsonObject.class);
-			JsonObject poi = json.getAsJsonObject("point_of_interaction");
-			String qr = poi.getAsJsonObject("transaction_data").get("qr_code").getAsString();
+			// JsonObject json = gson.fromJson(responseBody, JsonObject.class);
+			// JsonObject poi = json.getAsJsonObject("point_of_interaction");
+			// String qr = poi.getAsJsonObject("transaction_data").get("qr_code").getAsString();
 			Object[] paymentData = {
 				paymentId,
 				qr
