@@ -22,6 +22,7 @@ import io.github.pimentelleo.bukkitpix.mercadopago.MercadoPagoAPI;
 public class AutoPixCommand implements CommandExecutor {
 	
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+	BukkitPix ap;
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String command, String[] args) {
@@ -91,7 +92,7 @@ public class AutoPixCommand implements CommandExecutor {
 			}
 			else if (args[0].equalsIgnoreCase("check")) {
 				String payId = args[1];
-				MercadoPagoAPI.checkPayment(null, null, payId);
+				OrderManager.validateOrder(sender.getName(), Integer.parseInt(payId));
 			}
 			else if (args[0].equalsIgnoreCase("reload")) {
 				if (!sender.hasPermission("autopix.admin")) {
@@ -145,7 +146,7 @@ public class AutoPixCommand implements CommandExecutor {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				List<Order> orders = OrderManager.getOrders(player);
+				List<Order> orders = OrderManager.listOrders(player);
 				if (orders.isEmpty()) {
 					MSG.sendMessage(sender, "sem-ordens");
 					return;

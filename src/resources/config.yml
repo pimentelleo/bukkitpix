@@ -54,7 +54,21 @@ menu:
       # Lista de produtos disponiveis
       produtos:
         VIP1:
-          preco: 0.23
+          preco: 2.50
+          pre-comandos:
+          - 'say {player} gerou uma ordem PIX!'
+          comandos:
+          - 'say {player} pagou por PIX!'
+          - 'give {player} diamond_sword 1'
+          icone:
+            slot: 5
+            material: diamond_sword
+            nome: '&6&lVIP 1 &7- &aR${preco}'
+            descricao:
+            - '&7Vip por &c30 &7dias'
+            - '&7Clique para comprar por &aPIX'
+        VIP2:
+          preco: 3.00
           pre-comandos:
           - 'say {player} gerou uma ordem PIX!'
           comandos:

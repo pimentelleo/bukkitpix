@@ -3,6 +3,7 @@
 /home/leonardo/bukkitpix/src/io/github/pimentelleo/bukkitpix/mercadopago/MPValidator.java
 /home/leonardo/bukkitpix/src/io/github/pimentelleo/bukkitpix/DonorInfo.java
 /home/leonardo/bukkitpix/src/io/github/pimentelleo/bukkitpix/OrderProduct.java
+/home/leonardo/bukkitpix/src/io/github/pimentelleo/bukkitpix/inventory/PanelsManager.java
 /home/leonardo/bukkitpix/src/io/github/pimentelleo/bukkitpix/qrcode/ImageCreator.java
 /home/leonardo/bukkitpix/src/io/github/pimentelleo/bukkitpix/qrcode/PixGenerator.java
 /home/leonardo/bukkitpix/src/io/github/pimentelleo/bukkitpix/MSG.java

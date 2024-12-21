@@ -64,9 +64,9 @@ public class MercadoPagoAPI {
 				"email": "%s@gmail.com"
 			},
 			"payment_method_id": "pix",
-			"transaction_amount": 2
+			"transaction_amount": %s
 		}
-			""".formatted(price, p.getName());
+			""".formatted(price, p.getName(), price);
 		String formattedBody = jsonBody
 			.replaceAll("\\s+", "")        // Remove whitespace
 			.replace("\\", "")             // Remove backslashes
@@ -99,7 +99,7 @@ public class MercadoPagoAPI {
 			JsonObject responseObject = gson.fromJson(response.body().charStream(), JsonObject.class);
 			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aResponse: " + gson.toJson(responseObject));
 
-			int paymentId = responseObject.get("id").getAsInt();
+			long paymentId = responseObject.get("id").getAsLong();
 			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aPayment ID: " + gson.toJson(paymentId));
 
 			String qr = responseObject.getAsJsonObject("point_of_interaction").getAsJsonObject("transaction_data").get("qr_code").getAsString();
@@ -126,7 +126,7 @@ public class MercadoPagoAPI {
 	}
 
 
-	public static String checkPayment(BukkitPix ap, Player p, String paymentId) {	
+	public static String checkPayment(BukkitPix ap, String p, long paymentId) {	
 
 		OkHttpClient client = new OkHttpClient();
 		Request request = new Request.Builder()
@@ -142,7 +142,7 @@ public class MercadoPagoAPI {
 			Bukkit.getConsoleSender().sendMessage("\u00a7b[AutoPix] \u00a7cErro ao validar PIX:\n" 
 				+ response.code() + " - " + response.body().string()
 				+ "\nVerifique se configurou corretamente o token do MP.");
-			MSG.sendMessage(p, "erro-validar");
+			// MSG.sendMessage(p, "erro-validar");
 			return null;
 			}
 
@@ -152,16 +152,25 @@ public class MercadoPagoAPI {
 			// 	return null;
 			// }
 
-			String responseBody = response.body().string();
 			Gson gson = new Gson();
-			JsonObject json = gson.fromJson(responseBody, JsonObject.class);
-			JsonObject poi = json.getAsJsonObject("point_of_interaction");
-			String qr = poi.getAsJsonObject("transaction_data").get("qr_code").getAsString();
 
-			return qr;
+			JsonObject responseObject = gson.fromJson(response.body().charStream(), JsonObject.class);
+			
+			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aResponse (check payment): " + gson.toJson(responseObject));
+
+			String status = responseObject.getAsJsonObject("status").getAsString();
+			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aQR DATA: " + gson.toJson(status));
+			if (status.equals("approved")) {
+				// order.setTransaction(responseObject.get("id").getAsString());
+				// OrderManager.updateOrder(order);
+				// MSG.sendMessage(p, "pix-validado");
+				return "true";
+			} else {
+				return "false";
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			MSG.sendMessage(p, "erro-validar");
+			// MSG.sendMessage(p, "erro-validar");
 			return null;
 		}
 	}

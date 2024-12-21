@@ -56,7 +56,7 @@ public class OrderManager {
 		conn.prepareStatement("CREATE TABLE IF NOT EXISTS autopix_orders "
 				+ "(id INTEGER PRIMARY KEY " + autoIncrement + ", player VARCHAR(16) NOT NULL,"
 				+ "product VARCHAR(16) NOT NULL, price DECIMAL(10, 2) NOT NULL, "
-				+ "created TIMESTAMP NOT NULL, qrData VARCHAR(32) NOT NULL, paymentId INTEGER NOT NULL);").executeUpdate();
+				+ "created TIMESTAMP NOT NULL, qrData VARCHAR(255) NOT NULL, paymentId BIGINT NOT NULL);").executeUpdate();
 		
 		conn.prepareStatement("CREATE TABLE IF NOT EXISTS autopix_pendings " 
 				+ "(id VARCHAR(32) PRIMARY KEY, player VARCHAR(16) NOT NULL);").executeUpdate();
@@ -67,15 +67,15 @@ public class OrderManager {
 	public static Order createOrder(Player p, String product, float price, Object[] paymentData) {
 		try {
 
-			Integer paymentId = (Integer) paymentData[0];
+			Long paymentId = Long.valueOf(paymentData[0].toString());
 			String qrData = (String) paymentData[1];
 			PreparedStatement ps = conn.prepareStatement("INSERT INTO autopix_orders "
-					+ "(player, product, price, created, paymentId) VALUES (?, ?, ?, ?, ?, ?);");
+					+ "(player, product, price, created, paymentId, qrData) VALUES (?, ?, ?, ?, ?, ?);");
 			ps.setString(1, p.getName());
 			ps.setString(2, product);
 			ps.setFloat(3, price);
 			ps.setTimestamp(4, Timestamp.from(Instant.now()));
-			ps.setInt(5, paymentId);
+			ps.setLong(5, paymentId);
 			ps.setString(6, qrData);
 			
 			ps.executeUpdate();
@@ -88,6 +88,84 @@ public class OrderManager {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	public static List<Order> listOrders(String player) {
+		List<Order> orders = new ArrayList<>();
+		
+		try {
+			PreparedStatement ps = conn.prepareStatement("SELECT * FROM autopix_orders WHERE player = ?;");
+			ps.setString(1, player);
+			
+			ResultSet rs = ps.executeQuery();
+			while (rs.next()) {
+				int id = rs.getInt(1);
+				String player_real = rs.getString("player");
+				String product = rs.getString("product");
+				float price = rs.getFloat("price");
+				Timestamp created = rs.getTimestamp("created");
+				String transaction = rs.getString("qrData");
+				
+				Order ord = new Order(player_real, product, price, created.getTime());
+				ord.setId(id);
+				ord.setTransaction(transaction);
+				
+				orders.add(ord);
+			}
+			
+			return orders;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return orders;
+	}
+
+	public static List<Order> validateOrder(BukkitPix ap, String player, Integer orderId) {
+		List<Order> orders = new ArrayList<>();
+		
+		try {
+			PreparedStatement ps = conn.prepareStatement("SELECT * FROM autopix_orders WHERE player = ? AND id = ?;");
+			ps.setString(1, player);
+			ps.setInt(2, orderId);
+			
+			ResultSet rs = ps.executeQuery();
+			long paymentId = rs.getLong("paymentId");
+			String product = rs.getString("product");
+			String isOrderPaid = MercadoPagoAPI.checkPayment(BukkitPix.getInstance(), player, paymentId);
+			
+
+			if (isOrderPaid == "true") {
+				String executecommand = ap.getConfig().getString("commands.VIP1");
+				List<String> commands = ap.getConfig().getStringList("menu." + "principal." + "produtos." + product + ".comandos");
+
+				// Order ord = new Order(player, rs.getString("product"), rs.getFloat("price"), rs.getTimestamp("created").getTime());
+				// ord.setId(rs.getInt("id"));
+				// ord.setTransaction(rs.getString("qrData"));
+				// orders.add(ord);
+			}
+
+			
+			while (rs.next()) {
+				int id = rs.getInt(1);
+				String player_real = rs.getString("player");
+				String product = rs.getString("product");
+				float price = rs.getFloat("price");
+				Timestamp created = rs.getTimestamp("created");
+				String transaction = rs.getString("qrData");
+				
+				Order ord = new Order(player_real, product, price, created.getTime());
+				ord.setId(id);
+				ord.setTransaction(transaction);
+				
+				orders.add(ord);
+			}
+			
+			return orders;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return orders;
 	}
 	
 	public static List<Order> getOrders(String player) {
@@ -110,7 +188,7 @@ public class OrderManager {
 				String product = rs.getString("product");
 				float price = rs.getFloat("price");
 				Timestamp created = rs.getTimestamp("created");
-				String transaction = rs.getString("pix");
+				String transaction = rs.getString("qrData");
 				
 				Order ord = new Order(player_real, product, price, created.getTime());
 				ord.setId(id);
@@ -143,7 +221,7 @@ public class OrderManager {
 		}
 	}
 
-	public static boolean validateOrder(String transactionId) {
+	public static boolean validateOrders(String transactionId) {
 		try {
 			PreparedStatement ps = conn.prepareStatement("SELECT id FROM autopix_orders WHERE pix = ?;");
 			ps.setString(1, transactionId);
