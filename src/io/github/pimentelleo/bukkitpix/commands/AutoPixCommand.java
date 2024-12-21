@@ -92,7 +92,7 @@ public class AutoPixCommand implements CommandExecutor {
 			}
 			else if (args[0].equalsIgnoreCase("check")) {
 				String payId = args[1];
-				OrderManager.validateOrder(sender.getName(), Integer.parseInt(payId));
+				OrderManager.validateOrder(BukkitPix.getInstance(), sender.getName(), Integer.parseInt(payId));
 			}
 			else if (args[0].equalsIgnoreCase("reload")) {
 				if (!sender.hasPermission("autopix.admin")) {
