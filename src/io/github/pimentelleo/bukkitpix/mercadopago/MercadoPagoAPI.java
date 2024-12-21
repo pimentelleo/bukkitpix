@@ -126,7 +126,7 @@ public class MercadoPagoAPI {
 	}
 
 
-	public static String checkPayment(BukkitPix ap, String p, long paymentId) {	
+	public static Boolean checkPayment(BukkitPix ap, String p, long paymentId) {	
 
 		OkHttpClient client = new OkHttpClient();
 		Request request = new Request.Builder()
@@ -158,15 +158,18 @@ public class MercadoPagoAPI {
 			
 			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aResponse (check payment): " + gson.toJson(responseObject));
 
-			String status = responseObject.getAsJsonObject("status").getAsString();
-			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aQR DATA: " + gson.toJson(status));
-			if (status.equals("approved")) {
+			String status = responseObject.get("status").getAsString();
+			Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aResponse (payment status): " + status);
+			if (status.trim().equals("approved")) {
+				Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aPayment approved: " + status);
+
 				// order.setTransaction(responseObject.get("id").getAsString());
 				// OrderManager.updateOrder(order);
 				// MSG.sendMessage(p, "pix-validado");
-				return "true";
+				return true;
 			} else {
-				return "false";
+				Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aPayment pending: " + status);
+				return false;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

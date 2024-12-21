@@ -129,36 +129,51 @@ public class OrderManager {
 			ps.setInt(2, orderId);
 			
 			ResultSet rs = ps.executeQuery();
-			long paymentId = rs.getLong("paymentId");
-			String product = rs.getString("product");
-			String isOrderPaid = MercadoPagoAPI.checkPayment(BukkitPix.getInstance(), player, paymentId);
-			
 
-			if (isOrderPaid == "true") {
-				String executecommand = ap.getConfig().getString("commands.VIP1");
-				List<String> commands = ap.getConfig().getStringList("menu." + "principal." + "produtos." + product + ".comandos");
+			if (rs.next()) {
+				long paymentId = rs.getLong("paymentId");
+				Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aSQL query: " + paymentId);
 
-				// Order ord = new Order(player, rs.getString("product"), rs.getFloat("price"), rs.getTimestamp("created").getTime());
-				// ord.setId(rs.getInt("id"));
-				// ord.setTransaction(rs.getString("qrData"));
-				// orders.add(ord);
-			}
-
-			
-			while (rs.next()) {
-				int id = rs.getInt(1);
-				String player_real = rs.getString("player");
 				String product = rs.getString("product");
-				float price = rs.getFloat("price");
-				Timestamp created = rs.getTimestamp("created");
-				String transaction = rs.getString("qrData");
+				Boolean isOrderPaid = MercadoPagoAPI.checkPayment(BukkitPix.getInstance(), player, paymentId);
+				Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aResponse (check payment): " + isOrderPaid);
+
 				
-				Order ord = new Order(player_real, product, price, created.getTime());
-				ord.setId(id);
-				ord.setTransaction(transaction);
-				
-				orders.add(ord);
+				if (isOrderPaid == true) {
+					Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aStarting player reward" + Bukkit.getPlayer(player));
+
+					// MSG.sendMessage(Bukkit.getPlayer(player), "pix-validado");
+
+					// String executecommand = ap.getConfig().getString("commands.VIP1");
+					List<String> commands = ap.getConfig().getStringList("menu.principal.produtos." + product + ".comandos");
+
+					for (String command : commands) {
+						Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{player}", player));
+					}
+
+					// Order ord = new Order(player, rs.getString("product"), rs.getFloat("price"), rs.getTimestamp("created").getTime());
+					// ord.setId(rs.getInt("id"));
+					// ord.setTransaction(rs.getString("qrData"));
+					// orders.add(ord);
+				} else {
+					MSG.sendMessage(Bukkit.getPlayer(player), "pendente");
+				}
 			}
+
+			
+			// while (rs.next()) {
+			// 	int id = rs.getInt(1);
+			// 	String player_real = rs.getString("player");
+			// 	float price = rs.getFloat("price");
+			// 	Timestamp created = rs.getTimestamp("created");
+			// 	String transaction = rs.getString("qrData");
+				
+			// 	Order ord = new Order(player_real, product, price, created.getTime());
+			// 	ord.setId(id);
+			// 	ord.setTransaction(transaction);
+				
+			// 	orders.add(ord);
+			// }
 			
 			return orders;
 		} catch (SQLException e) {
