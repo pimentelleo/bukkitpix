@@ -11,6 +11,7 @@ io/github/pimentelleo/bukkitpix/Order.class
 io/github/pimentelleo/bukkitpix/inventory/InventoryListener$1$1.class
 io/github/pimentelleo/bukkitpix/BukkitPix$1.class
 io/github/pimentelleo/bukkitpix/inventory/InventoryListener$2.class
+io/github/pimentelleo/bukkitpix/OrderManager$2.class
 io/github/pimentelleo/bukkitpix/TimeManager.class
 io/github/pimentelleo/bukkitpix/inventory/InventoryManager.class
 io/github/pimentelleo/bukkitpix/inventory/PanelsManager.class

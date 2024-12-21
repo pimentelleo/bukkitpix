@@ -191,6 +191,17 @@ public class InventoryManager {
 				p.getInventory().remove(item);
 		}
 	}
+
+
+	public static void removePaidMap(Player p) {
+		for (ItemStack item : p.getInventory().getContents()) {
+			if (item == null) continue;
+			if (!(item.hasItemMeta())) continue;
+			if (!(item.getItemMeta().hasDisplayName())) continue;
+			if (item.getItemMeta().getDisplayName().equals(mapTitle))
+				p.getInventory().remove(item);
+		}
+	}
 	
 	public static void updateMapMeta(BukkitPix ap, MapMeta meta, Player p, OrderProduct op) {
 		meta.setDisplayName(mapTitle);

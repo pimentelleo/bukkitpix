@@ -56,7 +56,7 @@ public class OrderManager {
 		conn.prepareStatement("CREATE TABLE IF NOT EXISTS autopix_orders "
 				+ "(id INTEGER PRIMARY KEY " + autoIncrement + ", player VARCHAR(16) NOT NULL,"
 				+ "product VARCHAR(16) NOT NULL, price DECIMAL(10, 2) NOT NULL, "
-				+ "created TIMESTAMP NOT NULL, qrData VARCHAR(255) NOT NULL, paymentId BIGINT NOT NULL);").executeUpdate();
+				+ "created TIMESTAMP NOT NULL, qrData VARCHAR(255) NOT NULL, paymentId BIGINT NOT NULL,  isPaid BOOL NOT NULL);").executeUpdate();
 		
 		conn.prepareStatement("CREATE TABLE IF NOT EXISTS autopix_pendings " 
 				+ "(id VARCHAR(32) PRIMARY KEY, player VARCHAR(16) NOT NULL);").executeUpdate();
@@ -70,19 +70,44 @@ public class OrderManager {
 			Long paymentId = Long.valueOf(paymentData[0].toString());
 			String qrData = (String) paymentData[1];
 			PreparedStatement ps = conn.prepareStatement("INSERT INTO autopix_orders "
-					+ "(player, product, price, created, paymentId, qrData) VALUES (?, ?, ?, ?, ?, ?);");
+					+ "(player, product, price, created, paymentId, qrData, isPaid) VALUES (?, ?, ?, ?, ?, ?, ?);", PreparedStatement.RETURN_GENERATED_KEYS);
 			ps.setString(1, p.getName());
 			ps.setString(2, product);
 			ps.setFloat(3, price);
 			ps.setTimestamp(4, Timestamp.from(Instant.now()));
 			ps.setLong(5, paymentId);
 			ps.setString(6, qrData);
+			ps.setBoolean(7, false);
 			
 			ps.executeUpdate();
 			
 			Order ord = new Order(p.getName(), product, price, 0L);
+
+			ResultSet generatedKeys = ps.getGeneratedKeys();
+			final Integer orderId;
+			if (generatedKeys.next()) {
+				orderId = generatedKeys.getInt(1);
+			} else {
+				orderId = null;
+			}
 			
-			return ord;
+			// return ord;
+
+			BukkitRunnable task = new BukkitRunnable() {
+				@Override
+				public void run() {
+					Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aBuscando pagamento: " + paymentId + "da ordem" + ord.getId());
+					String result = validateOrder(BukkitPix.getInstance(), p.getName(), orderId);
+					Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aValidateOrder result: " + result);
+
+					if ("success".equals(result) || "alreadyPaid".equals(result)) {
+						Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aPagamento " + paymentId + " validado!");
+
+						this.cancel();
+					}
+				}
+			};
+			task.runTaskTimer(BukkitPix.getInstance(), 0L, 100L);
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -120,9 +145,7 @@ public class OrderManager {
 		return orders;
 	}
 
-	public static List<Order> validateOrder(BukkitPix ap, String player, Integer orderId) {
-		List<Order> orders = new ArrayList<>();
-		
+	public static String validateOrder(BukkitPix ap, String player, Integer orderId) {
 		try {
 			PreparedStatement ps = conn.prepareStatement("SELECT * FROM autopix_orders WHERE player = ? AND id = ?;");
 			ps.setString(1, player);
@@ -135,11 +158,14 @@ public class OrderManager {
 				Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aSQL query: " + paymentId);
 
 				String product = rs.getString("product");
+				Boolean isPaid = rs.getBoolean("isPaid");
 				Boolean isOrderPaid = MercadoPagoAPI.checkPayment(BukkitPix.getInstance(), player, paymentId);
 				Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aResponse (check payment): " + isOrderPaid);
 
-				
-				if (isOrderPaid == true) {
+				if (isPaid == true) {
+					Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aPagamento já validado");
+					return "alreadyPaid";
+				} else if (isOrderPaid == true && isPaid == false) {
 					Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aStarting player reward" + Bukkit.getPlayer(player));
 
 					// MSG.sendMessage(Bukkit.getPlayer(player), "pix-validado");
@@ -151,36 +177,25 @@ public class OrderManager {
 						Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{player}", player));
 					}
 
-					// Order ord = new Order(player, rs.getString("product"), rs.getFloat("price"), rs.getTimestamp("created").getTime());
-					// ord.setId(rs.getInt("id"));
-					// ord.setTransaction(rs.getString("qrData"));
-					// orders.add(ord);
+					PreparedStatement updatePs = conn.prepareStatement("UPDATE autopix_orders SET isPaid = ? WHERE id = ?;");
+					updatePs.setBoolean(1, true);
+					updatePs.setInt(2, orderId);
+					updatePs.executeUpdate();
+					InventoryManager.removePaidMap(Bukkit.getPlayer(player));
+					return "success";
+
 				} else {
-					MSG.sendMessage(Bukkit.getPlayer(player), "pendente");
+					Bukkit.getConsoleSender().sendMessage("\u00a7b[BukkitPix] \u00a7aPagamento Pendente");
+					return "pending";
 				}
 			}
-
 			
-			// while (rs.next()) {
-			// 	int id = rs.getInt(1);
-			// 	String player_real = rs.getString("player");
-			// 	float price = rs.getFloat("price");
-			// 	Timestamp created = rs.getTimestamp("created");
-			// 	String transaction = rs.getString("qrData");
-				
-			// 	Order ord = new Order(player_real, product, price, created.getTime());
-			// 	ord.setId(id);
-			// 	ord.setTransaction(transaction);
-				
-			// 	orders.add(ord);
-			// }
-			
-			return orders;
+			return null;
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
-		return orders;
+		return null;
 	}
 	
 	public static List<Order> getOrders(String player) {
